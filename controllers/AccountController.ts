@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models';
 import bcrypt from 'bcryptjs';
-export default class UserController {
+export default class AccountController {
     static index(req: Request, res: Response) {
 
     }

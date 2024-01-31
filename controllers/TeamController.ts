@@ -16,5 +16,13 @@ export default class TeamController {
     static async createMember(req: Request, res: Response) {
         //This controller allows the creation of a team member
     }
+
+    static async removeMember(req: Request, res: Response) {
+        //This controller allows the creator of the team to remove a member from the team
+    }
+    
+    static async deleteTeam(req: Request, res: Response) {
+        //This controller allows the owner to delete the team
+    }
     
 }

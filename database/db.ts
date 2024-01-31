@@ -1,14 +1,18 @@
 import mongoose from "mongoose";
 import { logsWrite } from "../configs/logs";
+import dotenv from 'dotenv';
+
+
+dotenv.config();
 
 const mongoDBUri = process.env.MONGO_DATABASE_URI as string;
 
 const mongoDBName = process.env.MONGO_DB_NAME as string;
 
-async function connectToDb() {
+export async function connectToDb() {
     try{
 
-        await mongoose.connect(`{mongoDBUri}/{mongoDBName}`);
+        await mongoose.connect(`${mongoDBUri}/${mongoDBName}`);
 
     } catch (error) {
         if(error instanceof Error)
@@ -19,6 +23,6 @@ async function connectToDb() {
             error: JSON.stringify(error),
             stack: error?.stack as string,
             date: Date.now().toLocaleString(),
-        })
+        });
     }
 }
