@@ -8,7 +8,7 @@ export default class AccountController {
 
     static async createAccount(req: Request, res: Response) {
         const user = UserModel.findOne({ email: req.body['email']});
-
+        
         if(!user) {
             //Ignore an existing user
             return res.status(403).json({
