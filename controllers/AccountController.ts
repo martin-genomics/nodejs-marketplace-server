@@ -2,8 +2,24 @@ import { Request, Response } from 'express';
 import { UserModel } from '../models';
 import bcrypt from 'bcryptjs';
 export default class AccountController {
-    static index(req: Request, res: Response) {
+    static async  index(req: Request, res: Response) {
+        
+        const user = await UserModel.findById(res.locals.userId, { password: false });
+        
+        if(!user){
+            //perform some operations if user id was not found
+            return res.status(401).json({
+                success: false,
+                message: 'User authentification failed, Login required',
+                data: {
+                    action: 'login'
+                }
+            })
+        }
 
+        res.json(user.toJSON());
+        
+        
     }
 
     static async createAccount(req: Request, res: Response) {

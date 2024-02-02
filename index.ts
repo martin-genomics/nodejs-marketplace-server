@@ -45,5 +45,5 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use('/api/v1.0', userRoutes);
 
 //Run the app
-console.log('Running pm port: ', PORT);
+console.log('Running on port: ', PORT);
 app.listen(PORT);
