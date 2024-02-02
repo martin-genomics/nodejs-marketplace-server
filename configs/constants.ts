@@ -1,3 +1,33 @@
+export const ALLOWED_ROLES = {
+    USER: 'USER',
+    OWNER: 'OWNER',
+    CLIENT: 'CLIENT',
+    MANAGER: 'MANAGER',
+    VIEWER: 'VIEWER',
+}
+
 export const USER_CONSTANTS = {
     defaultPhotoPathUrl: '',
+    CREATE: {
+        FIELDS: {
+            FIRSTNAME: 'firstName',
+            LASTNAME: 'lastName',
+            EMAIL: 'email',
+            PHOTO: 'photo',
+            PASSWORD: 'password',
+            IS_EMAIL_VERIFIED: 'isEmailVerified',
+            IS_BLOCKED: 'isBlocked'
+        }
+    }
+}
+
+export const TEAM_CONSTANTS = {
+    CREATION: {
+        FIELDS: {
+            NAME:'name',
+            DESCRIPTION: 'description',
+            TAGLINE: 'tagline',
+            COVER_IMAGE: 'coverImage',
+        }
+    },
 }
