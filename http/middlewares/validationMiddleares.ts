@@ -11,8 +11,8 @@ const MY_ALLOWED_ROLES = ALLOWED_ROLES;
 async function validateBody(req: Request, res: Response, next: NextFunction) {
     
     const errors = validationResult(req);
-    console.log(errors, 'data', req.body)
-    if(!errors) {
+
+    if(!errors.isEmpty()) {
         return res.status(403).json({
             success: false,
             message: 'Request body error.',
@@ -25,41 +25,51 @@ async function validateBody(req: Request, res: Response, next: NextFunction) {
     next();
 }
 
-const passwordField = check('password', 'The password you have provided is weak. It must contain alphanumeric [A-z], [0-9] and symbols e.g [? , - ,&] and length of 8 ').isStrongPassword({
-    minLength: 8,
-    minLowercase: 1,
-    minUppercase: 1,
-    minNumbers: 1,
-    minSymbols: 1,
-    returnScore: false,
-    pointsPerUnique: 1,
-    pointsPerRepeat: 0.5,
-    pointsForContainingLower: 10,
-    pointsForContainingUpper: 10,
-    pointsForContainingNumber: 10,
-    pointsForContainingSymbol: 10,
-  });
+function passwordField(message: string) {
+    return check('password', message).isStrongPassword({
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
+        returnScore: false,
+        pointsPerUnique: 1,
+        pointsPerRepeat: 0.5,
+        pointsForContainingLower: 10,
+        pointsForContainingUpper: 10,
+        pointsForContainingNumber: 10,
+        pointsForContainingSymbol: 10,
+    });
+}
+
 
 export const createAccountRequest = [
     body(MY_USER_CONSTANTS.CREATE.FIELDS.FIRSTNAME).isAlpha(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.LASTNAME).isAlpha(),
-    body(MY_USER_CONSTANTS.CREATE.FIELDS.EMAIL).isAlpha(),
+    body(MY_USER_CONSTANTS.CREATE.FIELDS.EMAIL).isEmail(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.PHOTO).isAlpha(),
-    passwordField,
+    passwordField('The password you have provided is weak. It must contain alphanumeric [A-z], [0-9] and symbols e.g [? , - ,&] and length of 8 '),
     validateBody
+]
+
+export const validateSignInRequest = [
+    body(MY_USER_CONSTANTS.CREATE.FIELDS.EMAIL, 'Invalid email address').isEmail(),
+    passwordField('The provided password is incorrect.'),
+    validateBody,
 ]
 
 export const createTeamRequestValidation = [
     authMiddleware,
-    body(MY_TEAM_CONSTANTS.CREATION.FIELDS.NAME).isAlpha(),
-    body(MY_TEAM_CONSTANTS.CREATION.FIELDS.DESCRIPTION).isAlpha(),
-    body(MY_TEAM_CONSTANTS.CREATION.FIELDS.TAGLINE).isAlpha(),
+    body(MY_TEAM_CONSTANTS.CREATION.FIELDS.NAME, 'team name minimum letters 3+').isLength({ min: 3}),
+    body(MY_TEAM_CONSTANTS.CREATION.FIELDS.DESCRIPTION).isLength({ max: 1000 }),
+    body(MY_TEAM_CONSTANTS.CREATION.FIELDS.TAGLINE).isLength({min: 5}),
     body(MY_TEAM_CONSTANTS.CREATION.FIELDS.COVER_IMAGE).isAlpha(),
     validateBody
 ];
 
 export const createTeamUserRequestValidation = [
     authMiddleware,
+    param('teamId', 'Invalid Team Id').isMongoId(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.FIRSTNAME).isAlpha(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.LASTNAME).isAlpha(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.EMAIL).isAlpha(),
@@ -67,6 +77,16 @@ export const createTeamUserRequestValidation = [
     validateBody
 ]
 
+export const updateUserRoleRequestValidation = [
+    authMiddleware,
+    param('teamId', 'Invalid Team Id').isMongoId(),
+    body('newRole', 'New Role provided was invalid').isEmpty()
+]
+
+export const teamInvitationRequestValidation = [
+    authMiddleware,
+    param('teamId', 'Invalid Team Id').isMongoId(),
+]
 export const removeTeamUserRequestValidation = [
     authMiddleware,
     permissionsChecker(['OWNER']),
