@@ -21,7 +21,7 @@ export interface UserType {
 export interface TeamUserType {
     userId: mongoose.Types.ObjectId;
     role: string;
-    isDeleted: string;
+    isDeleted: boolean;
 }
 
 export interface TeamType {
@@ -68,3 +68,12 @@ export interface RedisUser {
     projects: RedisProjectType[];
 }
 
+export interface  ProjectModelType {
+    name: string;
+    users: mongoose.Types.ObjectId[];
+    teamId: mongoose.Types.ObjectId;
+    creator: mongoose.Types.ObjectId;
+    isActive: boolean;
+    updatedAt: Date;
+    createdAt: Date;
+}

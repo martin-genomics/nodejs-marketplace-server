@@ -1,3 +1,5 @@
+import {AllowedRoles} from "../types/custom-types";
+
 export const ALLOWED_ROLES = {
     USER: 'USER',
     OWNER: 'OWNER',
@@ -30,4 +32,10 @@ export const TEAM_CONSTANTS = {
             COVER_IMAGE: 'coverImage',
         }
     },
+}
+
+export const AUTH_CONSTANTS = {
+    OTP :{
+        EXPIRATION_TIME: 60 //IN SECONDS
+    }
 }

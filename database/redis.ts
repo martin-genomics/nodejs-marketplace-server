@@ -1,7 +1,9 @@
 import { createClient } from "redis";
+import dotenv from 'dotenv';
 
-const url = process.env.REDIS_URL || 'http://localhost:6379';
-
+dotenv.config();
+const url = process.env.REDIS_URL || 'redis://localhost:6379';
+console.log(url)
 export default async function connectToRedis() {
     //REDIS DATABASE CONNECTIVITY
 

@@ -15,19 +15,19 @@ export default class RedisHelpers {
       
     }
 
-    static async setUserInfo(token: string, user: RedisUserType) {
+    static async setUserInfo(token: string, user: RedisUserType, teams: any, projects: any) {
         const redisClient = await connectToRedis();
         
         //Get all the teams where this user belongs and the roles
         //code here
-        const teams: RedisTeamType[] = [];
-        //Get all the projects the projects that this user has permission to
+        //const teams: RedisTeamType[] = [];
+        //Get all the projects that this user has permission to
         //code here
-        const projects: RedisProjectType[] = [];
+        //const projects: RedisProjectType[] = [];
         //Assign and save to redis
         
         await redisClient?.set(`auth_token_${token}`, JSON.stringify({
-            user: user,
+            user,
             token: token,
             teams: teams,
             projects: projects

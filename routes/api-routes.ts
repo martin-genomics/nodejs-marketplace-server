@@ -24,9 +24,12 @@ userRoutes.patch('/profile/:profileId/update/userInfo')
 userRoutes.post('/sign-up', createAccountRequest, AccountController.createAccount );
 
 //TEAM ROUTES
+userRoutes.get('/team/:teamId', authMiddleware, TeamController.index);
+userRoutes.get('/team/:teamId/users', authMiddleware,permissionsChecker(['OWNER', 'MANAGER']), TeamController.getTeamMembers);
+userRoutes.get('/team/:teamId/users/:userId/profile', authMiddleware,permissionsChecker(['OWNER', 'MANAGER']), TeamController.getTeamMember);
 userRoutes.post('/team/create', createTeamRequestValidation, TeamController.createTeam);
-userRoutes.post('/team/:teamId/users/add', createTeamUserRequestValidation,permissionsChecker(['OWNER', 'MANAGER']), TeamController.createUser);
-userRoutes.post('/team/:teamId/users/:userId/updateRole', updateUserRoleRequestValidation,permissionsChecker(['OWNER', 'MANAGER']), TeamController.updateUserRole);
+userRoutes.post('/team/:teamId/users/create', createTeamUserRequestValidation,permissionsChecker(['OWNER', 'MANAGER']), TeamController.createUser);
+userRoutes.put('/team/:teamId/users/:userId/updateRole', updateUserRoleRequestValidation,permissionsChecker(['OWNER', 'MANAGER']), TeamController.updateUserRole);
 userRoutes.post('/team/:teamId/users/joinTeam', teamInvitationRequestValidation, TeamController.joinTeam);
 userRoutes.delete('/team/:teamId/users/:userId/delete', removeTeamUserRequestValidation ,permissionsChecker(['OWNER']), TeamController.removeMember);
 userRoutes.delete('/team/:teamId/delete', authMiddleware,permissionsChecker(['OWNER']), TeamController.deleteTeam);

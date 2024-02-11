@@ -47,14 +47,13 @@ export const createAccountRequest = [
     body(MY_USER_CONSTANTS.CREATE.FIELDS.FIRSTNAME).isAlpha(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.LASTNAME).isAlpha(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.EMAIL).isEmail(),
-    body(MY_USER_CONSTANTS.CREATE.FIELDS.PHOTO).isAlpha(),
     passwordField('The password you have provided is weak. It must contain alphanumeric [A-z], [0-9] and symbols e.g [? , - ,&] and length of 8 '),
     validateBody
 ]
 
 export const validateSignInRequest = [
     body(MY_USER_CONSTANTS.CREATE.FIELDS.EMAIL, 'Invalid email address').isEmail(),
-    passwordField('The provided password is incorrect.'),
+    //passwordField('The provided password is incorrect.'),
     validateBody,
 ]
 
@@ -72,7 +71,7 @@ export const createTeamUserRequestValidation = [
     param('teamId', 'Invalid Team Id').isMongoId(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.FIRSTNAME).isAlpha(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.LASTNAME).isAlpha(),
-    body(MY_USER_CONSTANTS.CREATE.FIELDS.EMAIL).isAlpha(),
+    body(MY_USER_CONSTANTS.CREATE.FIELDS.EMAIL).isEmail(),
     body(MY_USER_CONSTANTS.CREATE.FIELDS.PHOTO).isAlpha(),
     validateBody
 ]

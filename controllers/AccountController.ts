@@ -3,14 +3,14 @@ import { UserModel } from '../models';
 import bcrypt from 'bcryptjs';
 export default class AccountController {
     static async  index(req: Request, res: Response) {
-        
+
         const user = await UserModel.findById(res.locals.userId, { password: false });
-        
+
         if(!user){
             //perform some operations if user id was not found
             return res.status(401).json({
                 success: false,
-                message: 'User authentification failed, Login required',
+                message: 'User authentication failed, Login required',
                 data: {
                     action: 'login'
                 }
@@ -23,9 +23,10 @@ export default class AccountController {
     }
 
     static async createAccount(req: Request, res: Response) {
-        const user = UserModel.findOne({ email: req.body['email']});
-        
-        if(!user) {
+
+
+        const user = await UserModel.findOne({ email: req.body['email']});
+        if(user) {
             //Ignore an existing user
             return res.status(403).json({
                 success: false,
@@ -45,7 +46,7 @@ export default class AccountController {
 
         //Save a new in the database
         const savedUser = await newUser.save();
-        if(!savedUser.isNew){
+        if(savedUser.isNew){
             // Failed to save new user
             return res.status(500).json({
                 success: false,
@@ -58,9 +59,10 @@ export default class AccountController {
 
         //New user was created
         res.json({
-            success: false,
-            message: 'Your account was succesfully.',
+            success: true,
+            message: 'Your account was successfully.',
             data: {
+                action: 'verification',
                 email: req.body['email']
             }
         });
