@@ -28,13 +28,14 @@ export default class RedisHelpers {
         
         await redisClient?.set(`auth_token_${token}`, JSON.stringify({
             user,
+            userId: user.userId.toString(),
             token: token,
             teams: teams,
             projects: projects
         }));
         
-        if(redisClient) return true;
-        return false;
+        return !!redisClient;
+
 
     }
 
@@ -43,7 +44,28 @@ export default class RedisHelpers {
 
         const user = await redisClient?.del(`auth_token_${key}`);
         
-        if(user) return true;
-        return false;
+        return !!user;
+
     }
+
+    static async storeOTP(userId: string, otp: number) {
+        const redisClient = await connectToRedis();
+
+        const isUserStored = await redisClient?.set(`auth_otp_${userId}`, JSON.stringify({
+            otp: otp
+        }), { EX: 60});
+
+        return !!isUserStored;
+
+    }
+
+    static async getStoredOTP(userId: string) {
+        const redisClient = await connectToRedis();
+
+        const storedUser = await redisClient?.get(`auth_otp_${userId}`);
+
+        if (!storedUser) return false;
+        return JSON.parse(storedUser).otp as number;
+    }
+
 }

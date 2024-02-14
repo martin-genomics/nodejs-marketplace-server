@@ -19,7 +19,7 @@ interface OTPbody {
     otp: string; //One-Time-Pin
 }
 
-export function sendOTP(body: OTPbody) {
+export function sendOTP(to: string, subject: string, otp: number): Promise<boolean> {
     const transport = createTransport({
         host: process.env.MAIL_HOST as string,
         //port: process.env.MAIL_PORT,
@@ -31,13 +31,13 @@ export function sendOTP(body: OTPbody) {
 
     const mailOptions: SendMailOptions = {
         from: process.env.MAIL_FROM as string,
-        to: body.to,
-        subject: body.subject,
+        to: to,
+        subject: subject,
         html: `<h1>Account Verification</h1>
     <div>
         <p>
             The One-Time-Pin you have received will expire in ${AUTH_CONSTANTS.OTP.EXPIRATION_TIME} seconds and do not share this with anyone..+o<br />
-            Your verification code is <b style="color:orange;">${body.otp}</b>
+            Your verification code is <b style="color:orange;">${otp}</b>
             
         </p>
     </div>`,
@@ -47,23 +47,17 @@ export function sendOTP(body: OTPbody) {
         transport.sendMail(mailOptions, error => {
             if (error) {
                 console.log('Error Failed to send otp');
-                return reject({
-                    success: false,
-                    message: 'Error Failed to send otp',
-                });
+                return reject(false);
             }
 
-            resolve({
-                success: true,
-                message: 'OTP code was sent!',
-            });
+            resolve(true);
         });
     });
 }
 
 export function sendOTPforgotPassword(userId: string, receipient: string, subject: string, otp: string) {
     const transport = createTransport({
-        host: process.env.MAIL_SERVICE as string,
+        host: process.env.MAIL_HOST as string,
         //port: process.env.MAIL_PORT,
         auth: {
             user: process.env.MAIL_USER as string,

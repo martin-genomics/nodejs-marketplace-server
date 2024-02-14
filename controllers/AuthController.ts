@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
 import {RedisHelpers, TeamHelpers} from "../helpers";
 import ProjectHelpers from "../helpers/ProjectHelpers";
+import otpGenerator from "otp-generator";
+import {sendOTP} from "../resources/MailingResource";
 
 dotenv.config();
 export default class AuthController {
@@ -67,4 +69,57 @@ export default class AuthController {
 
         
     }
+
+    static async verifyUser(req: Request, res: Response) {
+        const { otp, email } = req.body;
+        const user = await UserModel.findOne({email: email, isEmailVerified: false});
+        if (!user) {
+
+            return res.status(404).json({
+                success: false,
+                message: 'This account was not found or it is already verified',
+                data: {
+                    email: email,
+                    providedOTP: otp,
+                }
+
+            })
+
+        }
+
+        const storedOtp = await RedisHelpers.getStoredOTP(user._id.toString());
+        if(!storedOtp) return res.status(404).json({ success: false, message: 'The otp associated with this account was not found.', data: { action: 'resendCode', email: email}});
+
+        if(!(storedOtp === Number(otp))) return res.json({ success: false, message: 'The code entered is incorrect.', data:{ action: 'attemptResend', email: email, otp: otp}});
+
+        res.json({
+            success: true,
+            message: 'The account was successfully verified',
+            data: {
+                action: 'onBoarding',
+            }
+        })
+    }
+
+    static async getOTP(req: Request, res: Response) {
+        const { email } = req.body;
+
+        const user = await UserModel.findOne({ email: email, isEmailVerified: false});
+        if(!user) return res.status(404).json({ success: false, message: 'This email address was not found or it is already verified.'});
+
+        const otp = otpGenerator.generate(6,{upperCaseAlphabets: false, specialChars: false});
+        await RedisHelpers.storeOTP(user._id.toString(), Number(otp));
+        const isOTPSent = sendOTP(req.body['email'], 'Account Verification', Number(otp));
+        if(!isOTPSent) return res.status(403).json({ success: false, message: 'OTP was not sent', data: { action: 'resendOTP', email: req.body['email']}});
+
+        res.json({
+            success: true,
+            message: 'An OTP has been sent to your email to verify your account',
+            data: {
+                action: 'onboarding',
+                email: email,
+            }
+        });
+    }
+
 }

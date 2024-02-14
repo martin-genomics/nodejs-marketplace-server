@@ -93,3 +93,4 @@ export const removeTeamUserRequestValidation = [
     validateBody
 ]
 
+export const updateUserTypeRequestValidation = [authMiddleware, param('profileId').isMongoId(),body('userType').equals('freelancer' || 'buyer'), validateBody]

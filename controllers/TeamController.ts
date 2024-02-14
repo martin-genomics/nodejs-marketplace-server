@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
-import { TeamModel, UserModel } from "../models";
+import {ProjectModel, TeamModel, UserModel} from "../models";
 import mongoose from "mongoose";
 import { TeamHelpers } from "../helpers";
 import { sendAddTeamMail } from "../resources/MailingResource";
+import {existsSync} from "fs";
+import fs from "fs/promises";
 
 
 export default class TeamController {
@@ -38,6 +40,7 @@ export default class TeamController {
             }
         })
     }
+
     static async getTeamMembers(req: Request, res: Response) {
         const team = await TeamModel.findById(req.params['teamId']);
         if(!team){
@@ -66,6 +69,7 @@ export default class TeamController {
         })
 
     }
+
     static async createTeam(req: Request, res: Response) {
         //This controller enables the owner to create a team
         const team = await TeamModel.findOne({name: req.body['name']});
@@ -209,6 +213,54 @@ export default class TeamController {
         }
     }
 
+    static async updateTeamCoverImage(req: Request, res: Response){
+        const { userId } = res.locals;
+        const user = await UserModel.findById(userId);
+        if(!user) return res.json({success: true, message: 'This account does not exist.', data:{action: 'login'}});
+
+        //WRITE PHOTO PATH
+        console.log(req.files)
+        if(!req.files) return res.status(404).json({ success: false, message: 'No file found'});
+        //@ts-ignore
+        const { name, data, size, mimetype} = req.files[0];
+        const FILE_PATH = process.env.USER_PROFILE_PHOTO_PATH as string + user._id.toLocaleString()
+        if(!existsSync(FILE_PATH)) await fs.mkdir(FILE_PATH);
+        const fullPath = FILE_PATH + user._id.toString() + mimetype.split('/')[1]
+        await fs.writeFile(fullPath, data);
+
+
+        res.json({ success: true, message: 'Profile photo successfully updated', data: { photo: fullPath }})
+
+    }
+
+    static async updateTeamInfo(req: Request , res: Response){
+        const { userId } = res.locals;
+
+        const user = await UserModel.findById(userId);
+        if(!user){
+
+            return res.status(404).json({
+                success: false,
+                message: 'This account was not found. You will be redirected to login again',
+                data: {
+
+                }
+            })
+        }
+
+        //proceed with the update
+        await UserModel.updateOne({email: user.email}, req.body);
+        user.updatedAt = new Date();
+        res.json({
+            success: true,
+            message: 'The user details have been updated.',
+            data: {
+
+            }
+        })
+
+    }
+
     static async removeMember(req: Request, res: Response) {
         //This controller allows the creator of the team to remove a member from the team
         const { teamId , userId} = req.params;
@@ -249,8 +301,19 @@ export default class TeamController {
 
     static async deleteTeam(req: Request, res: Response) {
         //This controller allows the owner to delete the team
-        const team = await TeamModel.findOneAndDelete({creator: res.locals.userId});
-        if(!team) return res.status(404).json({ success: false, message: 'The team was not for deletion', data: { action: 'login'}});
+        console.log(res.locals)
+        const projects = await ProjectModel.find({teamId: req.params['teamId']});
+        for ( let project of projects) {
+            //Removes all the projects associated with the team.
+            console.log('Removing project: ', project.name, ' with id: ', (await project)._id.toString());
+            (await project).deleteOne();
+        }
+
+
+        const team = await TeamModel.findOneAndDelete({creator: res.locals.users});
+
+        console.log(team)
+        if(!team) return res.status(404).json({ success: false, message: 'The team was not deleted', data: { action: 'login'}});
 
         res.json({
             success: true,

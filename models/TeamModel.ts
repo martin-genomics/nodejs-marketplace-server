@@ -15,7 +15,7 @@ const teamUserSchema = new Schema<TeamUserType>({
 
 const teamSchema = new Schema<TeamType>({
     name: String,
-    coverImage: String,
+    teamCoverImage: {type: String, default: process.env.DEFAULT_TEAM_COVER_IMAGE},
     description: String,
     tagline: String,
     users: { type: [teamUserSchema], default: []},

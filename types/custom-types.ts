@@ -26,11 +26,11 @@ export interface TeamUserType {
 
 export interface TeamType {
     name: string;
+    teamCoverImage: string;
     users: TeamUserType[];
     creator: mongoose.Types.ObjectId;
     tagline: string;
     description: string;
-    coverImage: string;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -70,9 +70,11 @@ export interface RedisUser {
 
 export interface  ProjectModelType {
     name: string;
+    projectCover: string;
     users: mongoose.Types.ObjectId[];
     teamId: mongoose.Types.ObjectId;
     creator: mongoose.Types.ObjectId;
+    wage: {rate: string, cost: number, totalCost: number}
     isActive: boolean;
     updatedAt: Date;
     createdAt: Date;
