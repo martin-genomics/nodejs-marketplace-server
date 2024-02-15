@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
-import {ProjectModel, UserModel} from "../models";
+import {ProjectModel, TeamModel, UserModel} from "../models";
 import mongoose from "mongoose";
 import teamModel from "../models/TeamModel";
 import {ProjectHelpers, TeamHelpers} from "../helpers";
 import {existsSync} from "fs";
 import fs from "fs/promises";
+import fileUpload from "express-fileupload";
+import path from "path";
 
 
 export default class ProjectController {
@@ -43,6 +45,7 @@ export default class ProjectController {
         const newProject = new ProjectModel();
         newProject.name = name;
         newProject.wage = { rate: rate, cost: cost, totalCost: 0}
+        newProject.users = [new mongoose.mongo.ObjectId(userId)]
         newProject.teamId = new mongoose.mongo.ObjectId(teamId);
         newProject.creator = new mongoose.mongo.ObjectId(userId);
 
@@ -96,22 +99,31 @@ export default class ProjectController {
     }
 
     static async updateProjectCoverImage(req: Request, res: Response){
-        const { userId } = res.locals;
-        const user = await UserModel.findById(userId);
-        if(!user) return res.json({success: true, message: 'This account does not exist.', data:{action: 'login'}});
+        const { projectId, userId } = res.locals;
+        const project = await ProjectModel.findById(projectId);
+        //const user = await UserModel.findById(userId);
+        if(!project) return res.json({success: true, message: 'This project does not exist.', data:{action: 'login'}});
+
+        const file = req.files;
+        if(!file) return res.status(500).json({ success: false, message: 'File upload has failed'});
 
         //WRITE PHOTO PATH
-        console.log(req.files)
-        if(!req.files) return res.status(404).json({ success: false, message: 'No file found'});
-        //@ts-ignore
-        const { name, data, size, mimetype} = req.files[0];
-        const FILE_PATH = process.env.USER_PROFILE_PHOTO_PATH as string + user._id.toLocaleString()
+        //console.log(req.files)
+
+        const { name, data, size, mimetype} = file['projectCoverImage'] as fileUpload.UploadedFile;
+        const FILE_PATH = process.env.DEFAULT_TEAM_COVER_IMAGE as string + projectId;
+        console.log(FILE_PATH)
+        let completePath =path.join(FILE_PATH, 'images')
         if(!existsSync(FILE_PATH)) await fs.mkdir(FILE_PATH);
-        const fullPath = FILE_PATH + user._id.toString() + mimetype.split('/')[1]
+        if(!existsSync(completePath)) await fs.mkdir(completePath);
+
+        console.log(completePath, existsSync(FILE_PATH))
+        const fullPath = path.join(completePath ,'cover-' + project + '.' + mimetype.split('/')[1])
         await fs.writeFile(fullPath, data);
-
-
-        res.json({ success: true, message: 'Profile photo successfully updated', data: { photo: fullPath }})
+        let filePath = path.join('teams',projectId,'images', 'cover-' + projectId + '.' + mimetype.split('/')[1]);
+        project.projectCover = filePath;
+        await project.save();
+        res.json({ success: true, message: 'Profile photo successfully updated', data: { photo: filePath }})
 
     }
 

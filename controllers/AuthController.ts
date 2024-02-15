@@ -91,7 +91,8 @@ export default class AuthController {
         if(!storedOtp) return res.status(404).json({ success: false, message: 'The otp associated with this account was not found.', data: { action: 'resendCode', email: email}});
 
         if(!(storedOtp === Number(otp))) return res.json({ success: false, message: 'The code entered is incorrect.', data:{ action: 'attemptResend', email: email, otp: otp}});
-
+        user.isEmailVerified = true;
+        await user.save();
         res.json({
             success: true,
             message: 'The account was successfully verified',
@@ -107,11 +108,11 @@ export default class AuthController {
         const user = await UserModel.findOne({ email: email, isEmailVerified: false});
         if(!user) return res.status(404).json({ success: false, message: 'This email address was not found or it is already verified.'});
 
-        const otp = otpGenerator.generate(6,{upperCaseAlphabets: false, specialChars: false});
+        const otp = otpGenerator.generate(6,{upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false, digits: true});
         await RedisHelpers.storeOTP(user._id.toString(), Number(otp));
         const isOTPSent = sendOTP(req.body['email'], 'Account Verification', Number(otp));
         if(!isOTPSent) return res.status(403).json({ success: false, message: 'OTP was not sent', data: { action: 'resendOTP', email: req.body['email']}});
-
+        console.log(otp)
         res.json({
             success: true,
             message: 'An OTP has been sent to your email to verify your account',

@@ -38,8 +38,8 @@ export default async function authMiddleware(req: Request, res: Response, next: 
                 }
             })
         }
-
-        res.locals.user = user;
+        res.locals.userId = user.user.userId;
+        res.locals.user = user.user;
         res.locals.teams = user.teams;
         res.locals.projects = user.projects;
         console.log(res.locals)

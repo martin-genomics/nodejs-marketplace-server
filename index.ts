@@ -6,7 +6,7 @@ import { userRoutes } from './routes/api-routes';
 import { connectToDb } from './database/db';
 import { bgCyan, bgGreen, bgRed, bgYellow } from 'kleur';
 import { Request, Response, NextFunction } from 'express';
-
+import formidable from "formidable";
 dotenv.config();
 
 const PORT = process.env.PORT || 3336;
@@ -22,6 +22,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded( { extended: true }));
 app.use(expressFileupload());
+app.use(express.static('public', {}))
+//app.use(formidable({uploadDir:}))
+//app.use(upload.fields([{name: 'userPhoto'},{name: 'projectCoverImage', maxCount: 1},{'name': 'teamCoverImage',maxCount: 1}]));
 
 app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'POST') {

@@ -1,11 +1,14 @@
-import { Request, Response } from "express";
+import {Request, Response} from "express";
 import {ProjectModel, TeamModel, UserModel} from "../models";
 import mongoose from "mongoose";
-import { TeamHelpers } from "../helpers";
-import { sendAddTeamMail } from "../resources/MailingResource";
+import {TeamHelpers} from "../helpers";
+import {sendAddTeamMail} from "../resources/MailingResource";
 import {existsSync} from "fs";
 import fs from "fs/promises";
-
+import { IncomingForm } from 'formidable'
+import fileUpload from "express-fileupload";
+import * as path from "path";
+import {userRoutes} from "../routes/api-routes";
 
 export default class TeamController {
     static async index(req: Request, res: Response) {
@@ -214,34 +217,44 @@ export default class TeamController {
     }
 
     static async updateTeamCoverImage(req: Request, res: Response){
-        const { userId } = res.locals;
-        const user = await UserModel.findById(userId);
-        if(!user) return res.json({success: true, message: 'This account does not exist.', data:{action: 'login'}});
+        const { teamId } = res.locals;
+        const team = await TeamModel.findById(teamId);
+        //const user = await UserModel.findById(userId);
+        if(!team) return res.json({success: true, message: 'This team does not exist.', data:{action: 'login'}});
+
+        const file = req.files;
+        if(!file) return res.status(500).json({ success: false, message: 'File upload has failed'});
 
         //WRITE PHOTO PATH
-        console.log(req.files)
-        if(!req.files) return res.status(404).json({ success: false, message: 'No file found'});
-        //@ts-ignore
-        const { name, data, size, mimetype} = req.files[0];
-        const FILE_PATH = process.env.USER_PROFILE_PHOTO_PATH as string + user._id.toLocaleString()
+        //console.log(req.files)
+
+        const { name, data, size, mimetype} = file['teamCoverImage'] as fileUpload.UploadedFile;
+        const FILE_PATH = process.env.DEFAULT_TEAM_COVER_IMAGE as string + teamId;
+        console.log(FILE_PATH)
+        let completePath =path.join(FILE_PATH, 'images')
         if(!existsSync(FILE_PATH)) await fs.mkdir(FILE_PATH);
-        const fullPath = FILE_PATH + user._id.toString() + mimetype.split('/')[1]
+        if(!existsSync(completePath)) await fs.mkdir(completePath);
+
+        console.log(completePath, existsSync(FILE_PATH))
+        const fullPath = path.join(completePath ,'cover-' + teamId + '.' + mimetype.split('/')[1])
         await fs.writeFile(fullPath, data);
-
-
-        res.json({ success: true, message: 'Profile photo successfully updated', data: { photo: fullPath }})
+        let filePath = path.join('teams',teamId,'images', 'cover-' + teamId + '.' + mimetype.split('/')[1]);
+        team.teamCoverImage = filePath;
+        await team.save();
+        res.json({ success: true, message: 'Profile photo successfully updated', data: { photo: filePath }})
 
     }
 
     static async updateTeamInfo(req: Request , res: Response){
-        const { userId } = res.locals;
+        const { userId, teamId } = res.locals;
 
-        const user = await UserModel.findById(userId);
-        if(!user){
+        const team = await TeamModel.findById(teamId);
+
+        if(!team){
 
             return res.status(404).json({
                 success: false,
-                message: 'This account was not found. You will be redirected to login again',
+                message: 'This team was not found. You will be redirected to login again',
                 data: {
 
                 }
@@ -249,8 +262,9 @@ export default class TeamController {
         }
 
         //proceed with the update
-        await UserModel.updateOne({email: user.email}, req.body);
-        user.updatedAt = new Date();
+        await TeamModel.updateOne({_id: teamId}, req.body);
+        team.updatedAt = new Date();
+        await team.save();
         res.json({
             success: true,
             message: 'The user details have been updated.',

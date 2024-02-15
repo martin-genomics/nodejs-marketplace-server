@@ -4,6 +4,7 @@ import permissionsChecker from './Permission';
 import authMiddleware from './authMiddleware';
 import { NextFunction, Request, Response } from 'express';
 
+
 const MY_TEAM_CONSTANTS = TEAM_CONSTANTS;
 const MY_USER_CONSTANTS = USER_CONSTANTS
 const MY_ALLOWED_ROLES = ALLOWED_ROLES;
@@ -93,4 +94,21 @@ export const removeTeamUserRequestValidation = [
     validateBody
 ]
 
+export const teamInfoUpdateRequestValidation = [
+    authMiddleware,
+    permissionsChecker(['OWNER']),
+    param('teamId', 'The team access id is invalid').isMongoId(),
+    body('name').optional().isAlpha().optional().isAlphanumeric().optional(),
+    body('description').optional().isAlpha().optional().isAlphanumeric().optional(),
+    body('tagline').optional().isAlpha().optional().isAlphanumeric().optional(),
+    body('creator').optional().isMongoId().optional(),
+]
+
+export const teamCoverImageRequestValidation = [
+    authMiddleware,
+    permissionsChecker(['OWNER']),
+    param('teamId', 'The team access id is invalid').isMongoId(),
+    body('coverImage', 'Cover image is').isEmpty(),
+
+]
 export const updateUserTypeRequestValidation = [authMiddleware, param('profileId').isMongoId(),body('userType').equals('freelancer' || 'buyer'), validateBody]
