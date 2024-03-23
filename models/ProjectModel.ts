@@ -22,7 +22,7 @@ const projectSchema = new Schema<ProjectModelType>({
     users: [ProjectUserSchema],
     creator: mongoose.Types.ObjectId,
     teamId: mongoose.Types.ObjectId,
-    wage: [ProjectWageSchema],
+    wage: ProjectWageSchema,
     updatedAt: { type: Date, default: null},
     createdAt: { type: Date, default: Date.now },
 })

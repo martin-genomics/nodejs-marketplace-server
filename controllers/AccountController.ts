@@ -6,6 +6,8 @@ import {RedisHelpers} from "../helpers";
 import {sendOTP} from "../resources/MailingResource";
 import * as fs from "fs/promises";
 import {existsSync} from "fs";
+import fileUpload from "express-fileupload";
+import path from "path";
 export default class AccountController {
     static async  index(req: Request, res: Response) {
 
@@ -108,21 +110,32 @@ export default class AccountController {
     static async updateUserPhoto(req: Request, res: Response){
         const { userId } = res.locals;
         const user = await UserModel.findById(userId);
-        if(!user) return res.json({success: true, message: 'This account does not exist.', data:{action: 'login'}});
+        //const user = await UserModel.findById(userId);
+        if(!user) return res.json({success: true, message: 'This user account does not exist.', data:{action: 'login'}});
+
+        const file = req.files;
+        if(!file) return res.status(500).json({ success: false, message: 'File upload has failed'});
 
         //WRITE PHOTO PATH
-        console.log(req.files)
-        if(!req.files) return res.status(404).json({ success: false, message: 'No file found'});
-        //@ts-ignore
-        const { name, data, size, mimetype} = req.files[0];
-        const FILE_PATH = process.env.USER_PROFILE_PHOTO_PATH as string + user._id.toLocaleString()
+        //console.log(req.files)
+
+        const { name, data, size, mimetype} = file['userPhoto'] as fileUpload.UploadedFile;
+        const FILE_PATH = path.join(process.env.USER_MEDIA_PATH as string, userId);
+
+        let completePath = path.join(FILE_PATH, 'images');
+
         if(!existsSync(FILE_PATH)) await fs.mkdir(FILE_PATH);
-        const fullPath = FILE_PATH + user._id.toString() + mimetype.split('/')[1]
+        if(!existsSync(completePath)) await fs.mkdir(completePath);
+
+        //console.log(completePath, existsSync(FILE_PATH))
+        const fullPath = path.join(completePath ,'profile-' + userId + '.' + mimetype.split('/')[1])
         await fs.writeFile(fullPath, data);
+        let filePath = path.join('users',userId,'images', 'profile-' + userId + '.' + mimetype.split('/')[1]);
+        user.photo = filePath;
+        //console.log(filePath)
+        await user.save();
 
-
-        res.json({ success: true, message: 'Profile photo successfully updated', data: { photo: fullPath }})
-
+        res.json({success: true, message: 'The profile photo was updated', data: { photoUrl: filePath}});
     }
 
     static async updateUserInfo(req: Request , res: Response){

@@ -45,15 +45,18 @@ export default class ProjectController {
         const newProject = new ProjectModel();
         newProject.name = name;
         newProject.wage = { rate: rate, cost: cost, totalCost: 0}
-        newProject.users = [new mongoose.mongo.ObjectId(userId)]
         newProject.teamId = new mongoose.mongo.ObjectId(teamId);
         newProject.creator = new mongoose.mongo.ObjectId(userId);
 
 
-        await newProject.save();
         const newClient = await UserModel.findOne({email: clientEmail});
         if(!newClient) return res.json({ success: false, message: 'This client account was not found', data: {}})
-        await TeamHelpers.addTeamMember(teamId, true, {firstName: newClient.firstName, lastName: newClient.lastName, email: newClient.email, role: "CLIENT" })
+
+        const r = await TeamHelpers.addTeamMember(teamId, true, {firstName: newClient.firstName, lastName: newClient.lastName, email: newClient.email, role: "CLIENT" });
+        if(!r.success) return res.json({ success: false, message: 'Failed to add a new team in the database.', data: {}})
+        newProject.users = [new mongoose.mongo.ObjectId(userId), newClient._id];
+        await newProject.save();
+
         res.json({
             success: true,
             message: 'The project has been created'
@@ -63,10 +66,19 @@ export default class ProjectController {
 
     static async addProjectMember(req: Request, res: Response) {
         const { email } = req.body;
-        const { teamId, projectId} = res.locals;
+        const { teamId, projectId } = res.locals;
+        const user = await UserModel.findOne({email: email});
+        if(!user) return res.status(404).json({ success: false, message: 'The provided email is not associated with any account on the platform.', data: {email: email}})
+
+        const isMember = await TeamHelpers.isMember(teamId, user._id.toString());
+        if(!isMember) return res.status(409).json({ success: false, message: 'The provided email is not associated with any team member.', data: {email: email}})
+
+        const isProjectMember = await ProjectHelpers.isMember(teamId, user._id.toString());
+        if(isProjectMember) return res.status(409).json({ success: false, message: 'Is already a member of the project.', data: {email: email}})
+
         const addMemberResponse = await ProjectHelpers.addMember(email, projectId, teamId);
 
-        if(!addMemberResponse.success) return res.status(404).json(addMemberResponse);
+        if(!addMemberResponse.success) return res.json(addMemberResponse);
 
         res.json(addMemberResponse)
     }
@@ -99,7 +111,7 @@ export default class ProjectController {
     }
 
     static async updateProjectCoverImage(req: Request, res: Response){
-        const { projectId, userId } = res.locals;
+        const { projectId, userId, teamId } = res.locals;
         const project = await ProjectModel.findById(projectId);
         //const user = await UserModel.findById(userId);
         if(!project) return res.json({success: true, message: 'This project does not exist.', data:{action: 'login'}});
@@ -111,17 +123,23 @@ export default class ProjectController {
         //console.log(req.files)
 
         const { name, data, size, mimetype} = file['projectCoverImage'] as fileUpload.UploadedFile;
-        const FILE_PATH = process.env.DEFAULT_TEAM_COVER_IMAGE as string + projectId;
+        const FILE_PATH = path.join(process.env.DEFAULT_MEDIA_PATH as string,teamId);
         console.log(FILE_PATH)
-        let completePath =path.join(FILE_PATH, 'images')
+        let completePath = path.join(FILE_PATH, 'projects');
+        let completePath2 = path.join(completePath, projectId);
+        let completePath3 = path.join(completePath2, 'images');
         if(!existsSync(FILE_PATH)) await fs.mkdir(FILE_PATH);
         if(!existsSync(completePath)) await fs.mkdir(completePath);
+        if(!existsSync(completePath)) await fs.mkdir(completePath2);
+        if(!existsSync(completePath3)) await fs.mkdir(completePath3);
+
 
         console.log(completePath, existsSync(FILE_PATH))
-        const fullPath = path.join(completePath ,'cover-' + project + '.' + mimetype.split('/')[1])
+        const fullPath = path.join(completePath3 ,'cover-' + project + '.' + mimetype.split('/')[1])
         await fs.writeFile(fullPath, data);
-        let filePath = path.join('teams',projectId,'images', 'cover-' + projectId + '.' + mimetype.split('/')[1]);
+        let filePath = path.join('teams','projects',projectId,'images', 'cover-' + projectId + '.' + mimetype.split('/')[1]);
         project.projectCover = filePath;
+        console.log(filePath)
         await project.save();
         res.json({ success: true, message: 'Profile photo successfully updated', data: { photo: filePath }})
 

@@ -13,9 +13,33 @@ import {userRoutes} from "../routes/api-routes";
 export default class TeamController {
     static async index(req: Request, res: Response) {
         //This controller returns the team details
-        const teams = await TeamHelpers.getUserTeams(res.locals.user.user.userId);
-        console.log(teams, res.locals.user.user)
-        res.json({});
+        const { userId, teamId } = res.locals
+        const team = await TeamModel.findOne({creator: userId});
+
+        let teamMembers:{ user: any, role: string}[] = [];
+
+            for(let teamMember of team!.users){
+                if(!teamMember.isDeleted) {
+                    let user = await UserModel.findById(teamMember.userId._id.toString()).select(['-password', '-isEmailVerified', '-isBlocked', '-__v'])
+                    if (user) teamMembers.push({user: user.toJSON(), role: teamMember.role})
+                }
+            }
+
+
+
+
+        //console.log(teamMembers);
+
+
+        res.json({
+            success: true,
+            message: 'Team Fetched',
+            data: {
+                team: team,
+                members: teamMembers
+            }
+
+        });
     }
 
     static async getTeamMember(req: Request, res: Response) {

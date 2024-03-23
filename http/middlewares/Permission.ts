@@ -11,10 +11,6 @@ import { Request, Response, NextFunction } from 'express';
  The function validates user role
  */
 
-interface OrganizationUserType {
-  teamId: string;
-  role: AllowedRoles;
-}
 
 export default function permissionsChecker(allowedRoles: AllowedRoles[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -25,14 +21,14 @@ export default function permissionsChecker(allowedRoles: AllowedRoles[]) {
     const { teamId, projectId, userId } = req.params;
     if (teamId) {
       //api/v1.0/team/create
-      //api/v1.0/team/{orngaizationId}/edit
+      //api/v1.0/team/{teamId}/edit
       //api/v1.0/team/{teamId}/view
       //api/v1.0/team/{teamId}/delete
       //api/v1.0/teams/{teamId}/users
       //api/v1.0/teams/{teamId}/users/create
       //api/v1.0/team/{teamId}/projects/create
 
-      const team = res.locals.teams.filter((team: OrganizationUserType) => team.teamId === teamId);
+      const team = res.locals.teams.filter((team: {teamId: string, role: AllowedRoles}) => team.teamId === teamId);
 
       if (team.length === 0) {
         return res.status(401).json({
@@ -60,9 +56,9 @@ export default function permissionsChecker(allowedRoles: AllowedRoles[]) {
        * api/v1.0/team/{teamId}/projects/projectId/delete
        */
 
-      const partOfprojects = res.locals.projects.some((project: any) => project.projectId === projectId);
+      const partProjects = res.locals.projects.some((project: any) => project.projectId === projectId);
 
-      if (!partOfprojects) {
+      if (!partProjects) {
         return res.status(401).json({
           success: false,
           message: 'You do not have permission to this project.',

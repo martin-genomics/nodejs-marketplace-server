@@ -9,7 +9,7 @@ const MY_TEAM_CONSTANTS = TEAM_CONSTANTS;
 const MY_USER_CONSTANTS = USER_CONSTANTS
 const MY_ALLOWED_ROLES = ALLOWED_ROLES;
 
-async function validateBody(req: Request, res: Response, next: NextFunction) {
+export async function validateBody(req: Request, res: Response, next: NextFunction) {
     
     const errors = validationResult(req);
 

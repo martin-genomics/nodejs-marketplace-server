@@ -55,7 +55,7 @@ export function sendOTP(to: string, subject: string, otp: number): Promise<boole
     });
 }
 
-export function sendOTPforgotPassword(userId: string, receipient: string, subject: string, otp: string) {
+export function sendOTPforgotPassword(userId: string, recipient: string, subject: string, otp: number) {
     const transport = createTransport({
         host: process.env.MAIL_HOST as string,
         //port: process.env.MAIL_PORT,
@@ -69,9 +69,9 @@ export function sendOTPforgotPassword(userId: string, receipient: string, subjec
 
     const mailOptions: SendMailOptions = {
         from: process.env.MAIL_FROM as string,
-        to: receipient,
+        to: recipient,
         subject: subject,
-        html: compiledTemplate({ otpData: { code: otp, userId: userId, expiryTime: AUTH_CONSTANTS.OTP.EXPIRATION_TIME } }),
+        html: compiledTemplate({ otpData: { code: otp, userId: userId, expiryTime: AUTH_CONSTANTS.OTP.FORGOT_PASSWORD_TIME } }),
     };
 
     return new Promise((resolve, reject) => {

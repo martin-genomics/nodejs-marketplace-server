@@ -45,7 +45,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 })();
 
 //Routes
-app.use('/api/v1.0', userRoutes);
+app.use('/api/v1.0/user', userRoutes);
+app.use('/api/v1.0/admin', userRoutes);
 
 //Run the app
 console.log('Running on port: ', PORT);

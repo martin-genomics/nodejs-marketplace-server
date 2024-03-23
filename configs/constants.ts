@@ -36,6 +36,7 @@ export const TEAM_CONSTANTS = {
 
 export const AUTH_CONSTANTS = {
     OTP :{
-        EXPIRATION_TIME: 60 //IN SECONDS
+        EXPIRATION_TIME: 60, //IN SECONDS
+        FORGOT_PASSWORD_TIME: 3600
     }
 }

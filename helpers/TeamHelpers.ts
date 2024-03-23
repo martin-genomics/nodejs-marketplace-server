@@ -45,7 +45,14 @@ export default class TeamHelpers {
     static async addTeamMember(teamId: string,exists: boolean ,user: {firstName: string, lastName: string, email: string, role: AllowedRoles}): Promise<{success: boolean, email?: string, password?: string}> {
         if(exists) {
             console.log('Already a member');
-            return { success: false }
+            const team = await TeamModel.findById(teamId);
+            if (!team) return {success: false };
+            const client = await UserModel.findOne({ email: user.email});
+
+            team.users.push({ userId: client!._id, role: user.role, isDeleted: false});
+            await team.save();
+            return { success: true, email: user.email };
+
         }
 
         const generatedPassword = passwordGenerator({

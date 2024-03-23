@@ -1,23 +1,17 @@
-import {ProjectModel, UserModel} from "../models";
+import {ProjectModel, TeamModel, UserModel} from "../models";
 import mongoose from "mongoose";
 
 export default class ProjectHelpers {
 
   static async getUserProjects(myUserId: string) {
     const userId = new mongoose.mongo.ObjectId(myUserId);
-      const projects = await ProjectModel.find({
-          //teamId: teamId,
-        users: {
-            $elemMatch: {
-                userId: { $in: userId }
-            },
-        },
-      }).select(['-_id', 'users']);
+      const projects = await ProjectModel.find().select(['-_id', 'users']);
 
       const user_projects: {projectId: string}[] = [];
 
       projects.map( project => {
           project.users.forEach( projectUserId => {
+              console.log(projectUserId)
               if(projectUserId.toString() === userId.toString())  user_projects.push({ projectId: project._id.toString()});
           })
       });
@@ -45,6 +39,13 @@ export default class ProjectHelpers {
 
       return  {success: true, message: 'A new project member has been added.', data: { user: user.toJSON() }}
 
+
+  }
+
+  static async isMember(teamId: string, userId: string): Promise<boolean> {
+        const project = await ProjectModel.findById(teamId);
+        if(!project) return false;
+        return project.users.some( memberId => memberId.toString() === userId);
 
   }
 }

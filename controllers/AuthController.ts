@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import { UserModel } from "../models";
 import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
-import {RedisHelpers, TeamHelpers} from "../helpers";
+import { RedisHelpers, TeamHelpers } from "../helpers";
 import ProjectHelpers from "../helpers/ProjectHelpers";
 import otpGenerator from "otp-generator";
-import {sendOTP} from "../resources/MailingResource";
+import {sendOTP, sendOTPforgotPassword} from "../resources/MailingResource";
 
 dotenv.config();
 export default class AuthController {
@@ -123,4 +123,24 @@ export default class AuthController {
         });
     }
 
+    static async forgotPassword(req: Request, res: Response) {
+        const { email } = req.body;
+
+        const user = await UserModel.findOne({ email: email, isEmailVerified:true });
+        if(!user) return res.status(404).json({ success: false, message: 'This email address was not found or it is not verified'});
+
+        const otp = otpGenerator.generate(6,{upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false, digits: true});
+        await RedisHelpers.storeOTP(user._id.toString(), Number(otp));
+        const isOTPSent = sendOTPforgotPassword(user._id.toString(),req.body['email'], 'Forgot Password', Number(otp));
+        if(!isOTPSent) return res.status(403).json({ success: false, message: 'OTP was not sent', data: { action: 'resendOTP', email: req.body['email']}});
+        console.log(otp)
+        res.json({
+            success: true,
+            message: 'An OTP has been sent to your email to recover your password',
+            data: {
+                action: 'forgotPassword',
+                email: email,
+            }
+        });
+    }
 }

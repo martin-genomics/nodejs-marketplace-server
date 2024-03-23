@@ -1,6 +1,10 @@
 import connectToRedis from "../database/redis";
 import { RedisProjectType, RedisTeamType, RedisUser, RedisUserType, UserType } from "../types/custom-types";
+import {ProjectHelpers, TeamHelpers} from "./index";
+import {UserModel} from "../models";
 
+
+type FIELD = 'teams' | 'projects' | 'user';
 export default class RedisHelpers {
 
     static async getUserInfo(key: string): Promise< RedisUser | undefined> {
@@ -66,6 +70,49 @@ export default class RedisHelpers {
 
         if (!storedUser) return false;
         return JSON.parse(storedUser).otp as number;
+    }
+
+    static async updateRedisData(token: string, filed: FIELD) {
+        //-----------------------
+        const redisClient = await connectToRedis();
+
+        let user = await redisClient?.get(`auth_token_${token}`);
+        if(!user) return {success: false, message: 'This account is not authenticated. You are required to login again', data: { action: 'login'}}
+
+        const myData = JSON.parse(user) as RedisUser;
+        const teams = await TeamHelpers.getUserTeams(myData.user.userId);
+        const projects = await ProjectHelpers.getUserProjects(myData.user.userId);
+        const updatedUser = await UserModel.findById(myData.user.userId);
+
+        if(!updatedUser) return {success: false, message: 'This account is not authenticated. You are required to login again', data: { action: 'login'}}
+
+        switch (filed) {
+            case "teams":
+
+                await RedisHelpers.setUserInfo(token, myData.user, teams, projects);
+                return  true;
+
+            case "projects":
+                //let teams = await TeamHelpers.getUserTeams(myData.user.userId);
+                //const projects = await ProjectHelpers.getUserProjects(myData.user.userId);
+                //myData.teams = teams;
+                await RedisHelpers.setUserInfo(token, myData.user, teams, projects);
+
+                return true;
+            case "user":
+                await RedisHelpers.setUserInfo(token, {
+                    userId: updatedUser._id.toString(),
+                    userType: updatedUser.userType,
+                    firstName: updatedUser.firstName,
+                    lastName: updatedUser.lastName,
+                    email: updatedUser.email
+                }, teams, projects);
+                return true;
+            default:
+                //unknown update field in redis
+                return false;
+
+        }
     }
 
 }

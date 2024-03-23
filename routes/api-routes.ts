@@ -9,9 +9,13 @@ import {
     teamInvitationRequestValidation,
     updateUserRoleRequestValidation,
     validateSignInRequest,
-    updateUserTypeRequestValidation, teamInfoUpdateRequestValidation, teamCoverImageRequestValidation,
+    updateUserTypeRequestValidation,
+    teamInfoUpdateRequestValidation,
+    teamCoverImageRequestValidation,
+    validateBody,
 } from "../http/middlewares/validationMiddleares";
 import permissionsChecker from "../http/middlewares/Permission";
+import {body} from "express-validator";
 
 const userRoutes = Router();
 
@@ -19,6 +23,7 @@ const userRoutes = Router();
 userRoutes.post('/sign-in', validateSignInRequest, AuthController.signIn)
 userRoutes.post('/verify-otp', AuthController.verifyUser );
 userRoutes.get('/get-otp', AuthController.getOTP);
+userRoutes.post('/forgot-password',[body('email').isEmail(), validateBody ], AuthController.forgotPassword);
 
 //ACCOUNT ROUTES
 userRoutes.get('/profile',authMiddleware, AccountController.index);
@@ -27,7 +32,6 @@ userRoutes.patch('/profile/:profileId/update/userInfo', authMiddleware, AccountC
 userRoutes.put('/profile/:profileId/update/userType', updateUserTypeRequestValidation, AccountController.updateUserType);
 userRoutes.post('/sign-up', createAccountRequest, AccountController.createAccount );
 userRoutes.delete('/profile/delete', authMiddleware, AccountController.deleteAccount);
-
 
 //TEAM ROUTES
 userRoutes.get('/team/:teamId', authMiddleware, TeamController.index);
@@ -40,7 +44,6 @@ userRoutes.put('/team/:teamId/users/:userId/updateRole', updateUserRoleRequestVa
 userRoutes.post('/team/:teamId/users/joinTeam', teamInvitationRequestValidation, TeamController.joinTeam);
 //THE ROUTE BELOW IS INCOMPLETE 2
 userRoutes.put('/team/:teamId/update', teamInfoUpdateRequestValidation, TeamController.updateTeamInfo);
-//THE ROUTE BELOW IS INCOMPLETE 3
 userRoutes.put('/team/:teamId/updateCover', teamCoverImageRequestValidation, TeamController.updateTeamCoverImage);
 userRoutes.delete('/team/:teamId/users/:userId/delete', removeTeamUserRequestValidation ,permissionsChecker(['OWNER']), TeamController.removeMember);
 userRoutes.delete('/team/:teamId/delete', authMiddleware,permissionsChecker(['OWNER']), TeamController.deleteTeam);
@@ -57,7 +60,7 @@ userRoutes.put('/team/:teamId/projects/:projectId/updateCover', authMiddleware,p
 userRoutes.delete('/team/:teamId/projects/:projectId/delete', authMiddleware,permissionsChecker(['OWNER']), ProjectController.deleteProject); //DONE
 
 
-//5 routes INCOMPLETE ROUTES
-//22 routes COMPLETE
+//4 routes INCOMPLETE ROUTES
+//23 routes COMPLETE
 
 export { userRoutes };
